@@ -1,0 +1,72 @@
+.body {
+    margin: 10px 20px 10px 20px;
+}
+
+textarea {
+    overflow: hidden;
+    width: 100%;
+    min-height: 55px;
+}
+
+#profile {
+    border-style: none;
+    border-radius: 20px;
+    background-color: rgb(224, 255, 255);
+}
+
+/* Grid */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto;
+    grid-gap: 10px;
+}
+
+.grid-item {
+    overflow: hidden;
+    border: solid grey 1px;
+    padding: 10px;
+}
+
+.post:hover {
+    background-color: rgb(247, 247, 247);
+}
+
+
+/* flex */
+.flex-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.submit-button-textarea {
+    align-self: flex-end;
+}
+
+.tweet-buttons, .from-info, .flex-space-between {
+    display: flex;
+    justify-content: space-between;
+}
+
+.flex-space-around {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+
+/* Media */
+@media screen and (max-width: 992px) {
+
+    .grid-item {
+        grid-column: 1/span 4;
+    }
+
+}
+
+@media screen and (min-width: 993px) {
+
+    .grid-item {
+        grid-column: 2/span 2;
+    }
+
+}

@@ -1,10 +1,12 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User
+from .models import User, Tweet, Like
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 
 def index(request):
@@ -61,3 +63,64 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/register.html")
+
+
+
+
+@csrf_exempt
+def tweets(request):
+    # сделать проверку на то, авторизован ли юзер
+    if request.method == "POST":
+        data = json.loads(request.body)
+        tweet = Tweet(text=data['tweetText'], user=request.user)
+        tweet.save()
+        return JsonResponse(tweet.serialize())
+
+    else:
+        if request.GET.get('type') == "following":
+            # get all following users
+            users = request.user.following.all()
+            # create empty QuerySet
+            twts = Tweet.objects.none()
+            # get tweets each following user
+            for user in users:
+                twts = twts.union(Tweet.objects.filter(user=user))
+
+        elif request.GET.get('type') == "allPosts":
+            # get all tweets
+            twts = Tweet.objects.all()
+
+        else:
+            user = User.objects.get(id=int(request.GET.get('type')))
+            twts = Tweet.objects.filter(user=user)
+
+        # sorted tweets for timestamp
+        twts = twts.order_by("-timestamp")
+        # send json-data
+        return JsonResponse([tweet.serialize() for tweet in twts], safe=False)
+
+
+
+def profile(request):
+    if request.method == "GET":
+        user_id = int(request.GET.get('id'))
+        user = User.objects.get(id=user_id)
+        following_num = len(user.following.all())
+        followers_num = len(user.user_set.all())
+
+        follow_button = ''
+        if not request.user.is_anonymous:
+            print(request.user.following.all())
+            follow_button = ('Unfollow' if user in request.user.following.all() else 'Follow')
+
+        return render(request, 'network/index.html', {
+            'profile': True,
+            'id': user.id,
+            'username': user.username,
+            'following_num': following_num,
+            'followers_num': followers_num,
+            'follow_button': follow_button
+        })
+
+
+

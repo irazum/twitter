@@ -1,5 +1,63 @@
 {% extends "network/layout.html" %}
 
+
+{% block script %}
+    {% if not user.is_authenticated and not profile %}
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelector('#tweet-field').style.display = 'none';
+        });
+    {% endif %}
+{% endblock %}
+
+
 {% block body %}
-    TODO
+
+<div class="grid-container">
+
+    {% if not profile %}
+        <div id="tweet-field" class="grid-item">
+            <form class="flex-container" id="tweet-form">
+                <textarea placeholder="Tweet your message :)"></textarea>
+                <input class="submit-button-textarea" type="submit" value="tweet">
+            </form>
+        </div>
+    {% endif %}
+
+    {% if profile %}
+        <div data-id="{{ id }}" id="profile" class="grid-item">
+            <div class="flex-space-between">
+                <h3>{{ username }}</h3>
+                {% if user.is_authenticated %}
+                    <button>{{ follow_button }}</button>
+                {% endif %}
+            </div>
+            <div class="flex-space-evenly">
+                <span>{{ following_num }} Following</span>
+                <span>{{ followers_num }} Followers</span>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="grid-item" id="posts">
+        <div class="from-info">
+            <a class="profile-link" href="{% url 'profile' %}">Username</a>
+            <span>timestamp</span>
+        </div>
+        <div class="tweet">
+            TESTddddddddddddddddddddddd dddddddddddd ddddddddddd ddddddd dddddddddd dddddddddd<br> dasasdas
+        </div>
+        <div class="tweet-buttons">
+            <button>comments</button>
+            <button>retweet</button>
+            <button>like</button>
+        </div>
+    </div>
+
+
+</div>
+
+
+
+
+
 {% endblock %}
