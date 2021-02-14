@@ -86,13 +86,13 @@ def tweets(request):
             for user in users:
                 twts = twts.union(Tweet.objects.filter(user=user))
 
-        elif request.GET.get('type') == "allPosts":
-            # get all tweets
-            twts = Tweet.objects.all()
+        elif request.GET.get('type') == "user":
+            user = User.objects.get(id=int(request.GET.get('id')))
+            twts = Tweet.objects.filter(user=user)
 
         else:
-            user = User.objects.get(id=int(request.GET.get('type')))
-            twts = Tweet.objects.filter(user=user)
+            # get all tweets
+            twts = Tweet.objects.all()
 
         # sorted tweets for timestamp
         twts = twts.order_by("-timestamp")

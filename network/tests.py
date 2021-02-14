@@ -2,8 +2,6 @@ from django.test import TestCase, Client, RequestFactory
 from .models import User, Tweet
 
 import json
-from .views import tweets
-# Create your tests here.
 
 
 class NetworkCaseTest(TestCase):

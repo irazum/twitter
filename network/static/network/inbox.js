@@ -192,7 +192,7 @@ function profile_link_handler(event) {
     })
 
     // load tweets
-    load_tweets(id);
+    load_tweets(`user&id=${id}`);
 }
 
 
