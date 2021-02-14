@@ -1,44 +1,39 @@
 {% extends "network/layout.html" %}
+{% load static %}
 
-
-{% block script %}
-    {% if not user.is_authenticated and not profile %}
-        document.addEventListener("DOMContentLoaded", () => {
-            document.querySelector('#tweet-field').style.display = 'none';
-        });
-    {% endif %}
+{% block head %}
+    <script src="{% static 'network/inbox.js' %}"></script>
 {% endblock %}
-
 
 {% block body %}
 
 <div class="grid-container">
 
-    {% if not profile %}
-        <div id="tweet-field" class="grid-item">
+
+        <div id="tweet-field" class="grid-item" {% if user.is_authenticated %} data-is_auth="1" {% endif %}>
             <form class="flex-container" id="tweet-form">
                 <textarea placeholder="Tweet your message :)"></textarea>
                 <input class="submit-button-textarea" type="submit" value="tweet">
+
             </form>
         </div>
-    {% endif %}
 
-    {% if profile %}
+
         <div data-id="{{ id }}" id="profile" class="grid-item">
             <div class="flex-space-between">
-                <h3>{{ username }}</h3>
+                <h3 class="username"></h3>
                 {% if user.is_authenticated %}
-                    <button>{{ follow_button }}</button>
+                    <button class="follow_btn"></button>
                 {% endif %}
             </div>
             <div class="flex-space-evenly">
-                <span>{{ following_num }} Following</span>
-                <span>{{ followers_num }} Followers</span>
+                <span class="following_num"></span>
+                <span class = followers_num></span>
             </div>
         </div>
-    {% endif %}
 
-    <div class="grid-item" id="posts">
+
+    <div class="grid-item tweet-container">
         <div class="from-info">
             <a class="profile-link" href="{% url 'profile' %}">Username</a>
             <span>timestamp</span>

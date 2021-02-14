@@ -9,9 +9,14 @@ textarea {
 }
 
 #profile {
-    border-style: none;
+    display: none;
     border-radius: 20px;
     background-color: rgb(224, 255, 255);
+}
+
+.like-btn {
+    font-size: 20px;
+    cursor: pointer;
 }
 
 /* Grid */

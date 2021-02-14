@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, Tweet, Like
+from .models import User, Tweet
 from django.views.decorators.csrf import csrf_exempt
 import json
 
@@ -74,7 +74,7 @@ def tweets(request):
         data = json.loads(request.body)
         tweet = Tweet(text=data['tweetText'], user=request.user)
         tweet.save()
-        return JsonResponse(tweet.serialize())
+        return JsonResponse(tweet.serialize(request.user))
 
     else:
         if request.GET.get('type') == "following":
@@ -97,30 +97,43 @@ def tweets(request):
         # sorted tweets for timestamp
         twts = twts.order_by("-timestamp")
         # send json-data
-        return JsonResponse([tweet.serialize() for tweet in twts], safe=False)
-
+        return JsonResponse([tweet.serialize(request.user) for tweet in twts], safe=False)
 
 
 def profile(request):
     if request.method == "GET":
-        user_id = int(request.GET.get('id'))
-        user = User.objects.get(id=user_id)
+        user = User.objects.get(id=int(request.GET.get('id')))
         following_num = len(user.following.all())
         followers_num = len(user.user_set.all())
 
         follow_button = ''
-        if not request.user.is_anonymous:
-            print(request.user.following.all())
+        if not request.user.is_anonymous and user != request.user:
             follow_button = ('Unfollow' if user in request.user.following.all() else 'Follow')
 
-        return render(request, 'network/index.html', {
-            'profile': True,
+        return JsonResponse({
             'id': user.id,
             'username': user.username,
             'following_num': following_num,
             'followers_num': followers_num,
-            'follow_button': follow_button
+            'follow_btn': follow_button
         })
 
 
+def change_status(request):
+    if request.method == "GET":
 
+        if request.GET.get('follow'):
+            user = User.objects.get(id=int(request.GET.get('id')))
+            if user in request.user.following.all():
+                request.user.following.remove(user)
+            else:
+                request.user.following.add(user)
+            return JsonResponse({'success': True})
+
+        elif request.GET.get('like'):
+            tweet = Tweet.objects.get(id=int(request.GET.get('id')))
+            if request.user in tweet.like.all():
+                tweet.like.remove(request.user)
+            else:
+                tweet.like.add(request.user)
+            return JsonResponse({'success': True})
