@@ -11,5 +11,6 @@ urlpatterns = [
 
     path("profile", views.profile, name="profile"),
     path("tweets", views.tweets, name="tweets"),
-    path("changestatus", views.change_status, name="change_status")
+    path("changestatus", views.change_status, name="change_status"),
+    path("edit/tweet", views.edit_tweet, name="edit_tweet")
 ]

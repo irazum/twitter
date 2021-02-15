@@ -33,6 +33,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // self button handler
+    if (document.querySelector('#self-btn')) {
+         document.querySelector('#self-btn').addEventListener("click", (event) => {
+            profile_link_handler(event, 'self');
+        });
+    }
+
+
     // load tweets for home page (all twits)
     if (document.querySelector('#tweet-field').dataset.is_auth) {
         document.querySelector("#tweet-field").style.display = 'block';
@@ -81,9 +89,11 @@ function create_tweet_element(tweet) {
     from_info.className = "from-info";
     grid_item.appendChild(from_info);
 
+
     let tweet_text = document.createElement('div');
     tweet_text.className = 'tweet';
-    tweet_text.innerHTML = tweet.text;
+    if (tweet.edit) { tweet_text.innerHTML = `${tweet.text}<br>(edited)`; }
+    else { tweet_text.innerHTML = tweet.text; }
     grid_item.appendChild(tweet_text);
 
     let tweet_buttons = document.createElement('div');
@@ -105,21 +115,26 @@ function create_tweet_element(tweet) {
     timestamp.innerHTML = tweet.timestamp;
     from_info.appendChild(timestamp);
 
-    // elements in tweet_buttons
 
+    /* elements in tweet_buttons */
+    // edit button
     let button = document.createElement('а');
-    //button.innerHTML = 'Edit';
     button.className = 'edit-button';
+
+    if (tweet.own) {
+        button.innerHTML = 'Edit';
+        button.addEventListener('click', edit_tweet_button_handler);
+    }
 
     tweet_buttons.appendChild(button);
 
 
-
+    // comments button
     button = document.createElement('a');
     button.innerHTML = 'comm';
     tweet_buttons.appendChild(button);
 
-
+    // like button
     button = document.createElement('a');
     button.className = 'like-btn';
     if (tweet.like === '') {
@@ -162,13 +177,15 @@ function submit_tweet_handler() {
 }
 
 
-function profile_link_handler(event) {
+function profile_link_handler(event, self_flag=null) {
     /* */
     document.querySelector("#tweet-field").style.display = 'none';
     document.querySelector('#profile').style.display = 'block';
 
-    // fill in profile block
-    id = event.target.getAttribute('data-id');
+    /* fill in profile block */
+    if (self_flag === 'self') { id = self_flag; }
+    else { id = event.target.getAttribute('data-id'); }
+
     fetch(`/profile?id=${id}`)
     .then(response => response.json())
     .then(profile_data =>{
@@ -223,4 +240,71 @@ function like_click_handler(event) {
             btn.style.color = 'blue'
         }
     })
+}
+
+
+
+function edit_tweet_button_handler(event) {
+    let tweet_cur_item = event.target.parentElement.parentElement;
+    // create edit tweet field
+    let tweet_field = create_tweet_edit_field(event);
+    tweet_field.dataset.id = tweet_cur_item.dataset.id;
+    // insert edit tweet field into the DOM
+    tweet_cur_item.parentElement.insertBefore(tweet_field, tweet_cur_item);
+    // hide the tweet
+    tweet_cur_item.style.display = 'none';
+
+
+}
+
+
+function create_tweet_edit_field(event) {
+    let tweet_field = document.createElement('div');
+    tweet_field.className = 'grid-item tweet-edit-field';
+
+    let form = document.createElement('form');
+    form.className = 'flex-container edit-tweet-form';
+    form.onsubmit = edit_form_button_handler;
+    tweet_field.appendChild(form);
+
+    /* elements in form */
+    textarea = document.createElement('textarea');
+    // insert tweet text from tweet-container in textarea
+    textarea.value = event.target.parentElement.parentElement.children[1].innerHTML;
+    textarea.addEventListener('input', auto_grow);
+    form.appendChild(textarea);
+
+    let input = document.createElement('input');
+    input.className = 'submit-edit-tweet';
+    input.setAttribute('type', 'submit');
+    input.setAttribute('value', 'edit');
+    form.appendChild(input);
+
+    return tweet_field;
+}
+
+
+function edit_form_button_handler(event) {
+    edit_item = event.target.parentElement;
+    fetch('edit/tweet', {
+        method: 'POST',
+        body: JSON.stringify({
+            id: edit_item.dataset.id,
+            text: event.target.firstChild.value
+        })
+    })
+    .then(response => {
+        if (response.status == 200) {
+            // choose hidden tweet container
+            let tweet_container = edit_item.nextElementSibling;
+            // get textarea value and insert in tweet container
+            let edited_tweet_text = edit_item.firstElementChild.firstElementChild.value;
+            tweet_container.children[1].innerHTML = edited_tweet_text;
+
+            // show the tweet and remove edit item
+            tweet_container.style.display = 'block';
+            edit_item.remove();
+        }
+    })
+    return false;
 }

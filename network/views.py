@@ -86,6 +86,9 @@ def tweets(request):
             for user in users:
                 twts = twts.union(Tweet.objects.filter(user=user))
 
+        elif request.GET.get('type') == "user" and request.GET.get('id') == 'self':
+            twts = Tweet.objects.filter(user=request.user)
+
         elif request.GET.get('type') == "user":
             user = User.objects.get(id=int(request.GET.get('id')))
             twts = Tweet.objects.filter(user=user)
@@ -102,7 +105,12 @@ def tweets(request):
 
 def profile(request):
     if request.method == "GET":
-        user = User.objects.get(id=int(request.GET.get('id')))
+
+        if request.GET.get('id') == 'self':
+            user = request.user
+        else:
+            user = User.objects.get(id=int(request.GET.get('id')))
+
         following_num = len(user.following.all())
         followers_num = len(user.user_set.all())
 
@@ -137,3 +145,21 @@ def change_status(request):
             else:
                 tweet.like.add(request.user)
             return JsonResponse({'success': True})
+
+
+'''
+нужно проверить, является ли юзер автором твита, если нет - отправить неудовлетворительный ответ,
+да - изменить текст твита и поставить твитку метку изменено, отправить ответ что всё в поряде 
+'''
+@csrf_exempt
+def edit_tweet(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        tweet = Tweet.objects.get(id=int(data['id']))
+        if tweet.user == request.user:
+            tweet.text = data['text']
+            tweet.edit = True
+            tweet.save()
+            return HttpResponse(status=200)
+        else:
+            return HttpResponse(status=403)

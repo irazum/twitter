@@ -16,10 +16,11 @@ class Tweet(models.Model):
     def serialize(self, user=None):
         if user and not user.is_anonymous:
             like = (1 if user in self.like.all() else 0)
-            own = (1 if self.user == user else '')
         else:
             like = ''
-            own = ''
+
+        own = (1 if self.user == user else '')
+
         return {
             'id': self.id,
             "user_id": self.user.id,
