@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from .models import User, Tweet
 from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
 import json
 
 
@@ -68,7 +69,7 @@ def register(request):
 
 
 @csrf_exempt
-def tweets(request):
+def tweets(request, num=10):
     # сделать проверку на то, авторизован ли юзер
     if request.method == "POST":
         data = json.loads(request.body)
@@ -99,8 +100,23 @@ def tweets(request):
 
         # sorted tweets for timestamp
         twts = twts.order_by("-timestamp")
+
+        #pagination
+        page_num = request.GET.get('page')
+        try:
+            page_num = int(page_num)
+        except ValueError:
+            print('! Page parameter is not Integer')
+        page = Paginator(twts, 10).get_page(page_num)
+        twts = page.object_list
+        has_next = page.has_next()
+        has_prev = page.has_previous()
+
         # send json-data
-        return JsonResponse([tweet.serialize(request.user) for tweet in twts], safe=False)
+        return JsonResponse({
+            'service': {'has_next': has_next, 'has_prev': has_prev},
+            'tweets': [tweet.serialize(request.user) for tweet in twts]
+        })
 
 
 def profile(request):

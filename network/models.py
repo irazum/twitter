@@ -32,3 +32,5 @@ class Tweet(models.Model):
             'own': own
         }
 
+    def __str__(self):
+        return f"{self.user}, {self.timestamp}:\n {self.text}"

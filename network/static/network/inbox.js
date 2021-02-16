@@ -17,10 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
         } else { document.querySelector("#tweet-field").style.display = 'none'; }
 
         document.querySelector('#profile').style.display = 'none';
-        load_tweets('allPosts');
+        load_tweets('allPosts', 1);
     });
 
-    // tweet-from handler
+    // tweet-form handler
     document.querySelector('#tweet-form > textarea').oninput = auto_grow;
     document.querySelector('#tweet-form').onsubmit = submit_tweet_handler;
 
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelector('#following').addEventListener("click", () => {
             document.querySelector("#tweet-field").style.display = 'block';
             document.querySelector('#profile').style.display = 'none';
-            load_tweets('following');
+            load_tweets('following', 1);
         });
     }
 
@@ -47,20 +47,20 @@ document.addEventListener("DOMContentLoaded", () => {
     } else { document.querySelector("#tweet-field").style.display = 'none'; }
 
     document.querySelector('#profile').style.display = 'none';
-    load_tweets("allPosts");
+    load_tweets("allPosts", 1);
 
 
 });
 
 
-function load_tweets(type) {
+function load_tweets(type, page) {
 /*
 Функция делает асинхронный запрос на "/tweets" , передавая доп. параметры в строке запроса
 type == following or all_posts. После сериализует json-ответ, создаёт в цикле grid-item на его основе.
 */
-    fetch(`/tweets?type=${type}`)
+    fetch(`/tweets?type=${type}&page=${page}`)
     .then(response => response.json())
-    .then(tweets => {
+    .then(data => {
         /* drop old tweet grid-items */
         items = document.querySelector(".grid-container").children;
         // transform nodeList in Array
@@ -69,11 +69,15 @@ type == following or all_posts. После сериализует json-отве�
         items.forEach(item => {
             item.remove();
         });
-        tweets.forEach(tweet => {
+
+        data.tweets.forEach(tweet => {
             /* create new tweet grid-item */
             let grid_item = create_tweet_element(tweet);
             document.querySelector(".grid-container").append(grid_item);
         });
+
+        pag_container = create_pagination(data.service, type, page);
+        document.querySelector('.grid-container').appendChild(pag_container);
     })
 }
 
@@ -209,7 +213,7 @@ function profile_link_handler(event, self_flag=null) {
     })
 
     // load tweets
-    load_tweets(`user&id=${id}`);
+    load_tweets(`user&id=${id}`, 1);
 }
 
 
@@ -308,3 +312,47 @@ function edit_form_button_handler(event) {
     })
     return false;
 }
+
+
+function create_pagination(service, type, cur_page) {
+    // create div-container pagination and 2 <a>: prev and next
+    pag_container = document.createElement('div');
+    pag_container.className = "grid-item flex-space-between";
+    pag_container.id = "pagination-container";
+
+
+    prev = document.createElement('a');
+    prev.className = 'previous-link';
+    prev.setAttribute('href', '#top');
+    prev.innerHTML = 'Previous';
+    prev.addEventListener('click', (event, type_ = type, page=cur_page - 1) => {
+        load_tweets(type_, page);
+    });
+
+    next = document.createElement('a');
+    next.className = 'next-link';
+    next.setAttribute('href', '#top');
+    next.innerHTML = 'Next';
+    next.addEventListener('click', (event, type_ = type, page=cur_page + 1) => {
+        load_tweets(type_, page);
+    });
+
+    // fill in pagination-container
+    if (service.has_next && service.has_prev) {
+        // add in pagination prev and next
+        pag_container.appendChild(prev);
+        pag_container.appendChild(next);
+    }
+    else if (service.has_next) {
+        // add in pagination next
+        pag_container.appendChild(next);
+    }
+    else if (service.has_prev) {
+        // add in pagination prev
+        pag_container.appendChild(prev);
+    }
+
+    // add pagination-container in the DOM
+    return pag_container
+}
+

@@ -19,6 +19,11 @@ textarea {
     cursor: pointer;
 }
 
+#pagination-container {
+    color: blue;
+    border: none;
+}
+
 /* Grid */
 .grid-container {
     display: grid;
@@ -35,6 +40,10 @@ textarea {
 
 .post:hover {
     background-color: rgb(247, 247, 247);
+}
+
+.previous-link {
+    margin-right: 20px;
 }
 
 
@@ -58,6 +67,9 @@ textarea {
     justify-content: space-evenly;
 }
 
+#pagination-container {
+    justify-content: center;
+}
 
 /* Media */
 @media screen and (max-width: 992px) {
