@@ -93,12 +93,19 @@ function create_tweet_element(tweet) {
     from_info.className = "from-info";
     grid_item.appendChild(from_info);
 
-
     let tweet_text = document.createElement('div');
     tweet_text.className = 'tweet';
-    if (tweet.edit) { tweet_text.innerHTML = `${tweet.text}<br>(edited)`; }
-    else { tweet_text.innerHTML = tweet.text; }
+    // replace \n on <br> in text for correct text display
+    tweet_text.innerHTML = tweet.text.replace(/\n/g, '<br>');
+
     grid_item.appendChild(tweet_text);
+
+    if (tweet.edit) {
+        edit_mark = document.createElement('div');
+        edit_mark.className = 'edit-mark-container';
+        edit_mark.innerHTML = 'edited';
+        grid_item.appendChild(edit_mark);
+    }
 
     let tweet_buttons = document.createElement('div');
     tweet_buttons.className = 'tweet-buttons';
@@ -255,6 +262,11 @@ function edit_tweet_button_handler(event) {
     tweet_field.dataset.id = tweet_cur_item.dataset.id;
     // insert edit tweet field into the DOM
     tweet_cur_item.parentElement.insertBefore(tweet_field, tweet_cur_item);
+
+    // set initial height for tweet_field
+    textarea = tweet_field.firstChild.firstChild;
+    textarea.style.height = `${textarea.scrollHeight}px`;
+
     // hide the tweet
     tweet_cur_item.style.display = 'none';
 
@@ -274,7 +286,7 @@ function create_tweet_edit_field(event) {
     /* elements in form */
     textarea = document.createElement('textarea');
     // insert tweet text from tweet-container in textarea
-    textarea.value = event.target.parentElement.parentElement.children[1].innerHTML;
+    textarea.value = event.target.parentElement.parentElement.children[1].innerHTML.replace(/<br>/g, '\n');
     textarea.addEventListener('input', auto_grow);
     form.appendChild(textarea);
 
@@ -297,18 +309,16 @@ function edit_form_button_handler(event) {
             text: event.target.firstChild.value
         })
     })
-    .then(response => {
-        if (response.status == 200) {
-            // choose hidden tweet container
-            let tweet_container = edit_item.nextElementSibling;
-            // get textarea value and insert in tweet container
-            let edited_tweet_text = edit_item.firstElementChild.firstElementChild.value;
-            tweet_container.children[1].innerHTML = edited_tweet_text;
+    .then(response => response.json())
+    .then(tweet => {
+        // choose hidden tweet container
+        let tweet_container = edit_item.nextElementSibling;
+        // fill in new tweet text in tweet container
+        tweet_container.children[1].innerHTML = tweet.text.replace(/\n/g, '<br>');
 
-            // show the tweet and remove edit item
-            tweet_container.style.display = 'block';
-            edit_item.remove();
-        }
+        // show the tweet and remove edit item
+        tweet_container.style.display = 'block';
+        edit_item.remove();
     })
     return false;
 }

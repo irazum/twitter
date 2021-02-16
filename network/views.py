@@ -7,6 +7,7 @@ from django.urls import reverse
 from .models import User, Tweet
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
+from django.utils.html import conditional_escape
 import json
 
 
@@ -73,7 +74,7 @@ def tweets(request, num=10):
     # сделать проверку на то, авторизован ли юзер
     if request.method == "POST":
         data = json.loads(request.body)
-        tweet = Tweet(text=data['tweetText'], user=request.user)
+        tweet = Tweet(text=conditional_escape(data['tweetText']), user=request.user)
         tweet.save()
         return JsonResponse(tweet.serialize(request.user))
 
@@ -107,7 +108,7 @@ def tweets(request, num=10):
             page_num = int(page_num)
         except ValueError:
             print('! Page parameter is not Integer')
-        page = Paginator(twts, 10).get_page(page_num)
+        page = Paginator(twts, num).get_page(page_num)
         twts = page.object_list
         has_next = page.has_next()
         has_prev = page.has_previous()
@@ -163,19 +164,16 @@ def change_status(request):
             return JsonResponse({'success': True})
 
 
-'''
-нужно проверить, является ли юзер автором твита, если нет - отправить неудовлетворительный ответ,
-да - изменить текст твита и поставить твитку метку изменено, отправить ответ что всё в поряде 
-'''
+
 @csrf_exempt
 def edit_tweet(request):
     if request.method == "POST":
         data = json.loads(request.body)
         tweet = Tweet.objects.get(id=int(data['id']))
         if tweet.user == request.user:
-            tweet.text = data['text']
+            tweet.text = conditional_escape(data['text'])
             tweet.edit = True
             tweet.save()
-            return HttpResponse(status=200)
+            return JsonResponse(tweet.serialize())
         else:
             return HttpResponse(status=403)

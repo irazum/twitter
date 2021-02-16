@@ -46,6 +46,10 @@ textarea {
     margin-right: 20px;
 }
 
+.tweet {
+    word-break: break-all;
+}
+
 
 /* flex */
 .flex-container {
