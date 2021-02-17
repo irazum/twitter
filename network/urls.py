@@ -1,5 +1,5 @@
 
-from django.urls import path
+from django.urls import path, re_path
 
 from . import views
 
@@ -12,5 +12,6 @@ urlpatterns = [
     path("profile", views.profile, name="profile"),
     path("tweets", views.tweets, name="tweets"),
     path("changestatus", views.change_status, name="change_status"),
-    path("edit/tweet", views.edit_tweet, name="edit_tweet")
+    path("edit/tweet", views.edit_tweet, name="edit_tweet"),
+    re_path(r"(?P<url>.+)", views.any_url, name="any_url")
 ]

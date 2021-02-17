@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse
 
 from .models import User, Tweet
@@ -171,9 +171,15 @@ def edit_tweet(request):
         data = json.loads(request.body)
         tweet = Tweet.objects.get(id=int(data['id']))
         if tweet.user == request.user:
-            tweet.text = conditional_escape(data['text'])
-            tweet.edit = True
-            tweet.save()
+            text = conditional_escape(data['text'])
+            if tweet.text != text:
+                tweet.text = text
+                tweet.edit = True
+                tweet.save()
             return JsonResponse(tweet.serialize())
         else:
             return HttpResponse(status=403)
+
+
+def any_url(request, url):
+    return redirect(reverse("index"))
