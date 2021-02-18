@@ -195,9 +195,12 @@ function create_tweet_element(tweet) {
 
 
 
-function submit_tweet_handler() {
+function submit_tweet_handler(event) {
     fetch('/tweets', {
         method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
         body: JSON.stringify({
             tweetText: document.querySelector('#tweet-form > textarea').value
         })
@@ -257,7 +260,7 @@ function profile_container_filler(profile_data) {
 
 
 function follow_btn_click_handler(event) {
-    fetch(`changestatus?follow=1&id=${document.querySelector('#profile').dataset.id}`)
+    fetch(`/changestatus?follow=1&id=${document.querySelector('#profile').dataset.id}`)
     .then(response => {
         let btn = event.target;
         if (btn.innerHTML == 'Follow') {
@@ -272,7 +275,7 @@ function follow_btn_click_handler(event) {
 
 function like_click_handler(event) {
     let btn = event.target;
-    fetch(`changestatus?like=1&id=${btn.parentElement.parentElement.dataset.id}`)
+    fetch(`/changestatus?like=1&id=${btn.parentElement.parentElement.dataset.id}`)
     .then(response => {
         if (btn.innerHTML == '♡') {
             btn.innerHTML = '❤';
@@ -334,8 +337,11 @@ function create_tweet_edit_field(event) {
 
 function edit_form_button_handler(event) {
     edit_item = event.target.parentElement;
-    fetch('edit/tweet', {
+    fetch('/edit/tweet', {
         method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
         body: JSON.stringify({
             id: edit_item.dataset.id,
             text: event.target.firstChild.value
@@ -400,3 +406,19 @@ function create_pagination(service, type, cur_page) {
     return pag_container
 }
 
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}

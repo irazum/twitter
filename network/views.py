@@ -69,7 +69,6 @@ def register(request):
 
 
 
-@csrf_exempt
 def tweets(request, num=10):
     # сделать проверку на то, авторизован ли юзер
     if request.method == "POST":
@@ -164,8 +163,6 @@ def change_status(request):
             return JsonResponse({'success': True})
 
 
-
-@csrf_exempt
 def edit_tweet(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -182,4 +179,5 @@ def edit_tweet(request):
 
 
 def any_url(request, url):
+    print('!Not expected URL!')
     return redirect(reverse("index"))
