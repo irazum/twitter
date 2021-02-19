@@ -29,6 +29,7 @@ class Tweet(models.Model):
             "timestamp": self.timestamp.strftime("%b %d %Y, %I:%M %p"),
             'edit': self.edit,
             'like': like,
+            'likes_num': len(self.like.all()),
             'own': own
         }
 

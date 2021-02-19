@@ -178,6 +178,9 @@ function create_tweet_element(tweet) {
 
 
     // like button
+    span = document.createElement('span');
+    tweet_buttons.appendChild(span);
+
     button = document.createElement('a');
     button.className = 'like-btn';
     if (tweet.like === '') {
@@ -190,8 +193,12 @@ function create_tweet_element(tweet) {
         else { button.innerHTML = '❤'; button.style.color = 'red';}
         button.addEventListener('click', like_click_handler)
     }
-    tweet_buttons.appendChild(button);
+    span.appendChild(button);
 
+    text_span = document.createElement('span');
+    text_span.className = 'likes-number';
+    text_span.innerHTML = tweet.likes_num;
+    span.appendChild(text_span);
 
     return grid_item
 }
@@ -278,8 +285,9 @@ function follow_btn_click_handler(event) {
 
 function like_click_handler(event) {
     let btn = event.target;
-    fetch(`/changestatus?like=1&id=${btn.parentElement.parentElement.dataset.id}`)
-    .then(response => {
+    fetch(`/changestatus?like=1&id=${btn.parentElement.parentElement.parentElement.dataset.id}`)
+    .then(response => response.json())
+    .then(data => {
         if (btn.innerHTML == '♡') {
             btn.innerHTML = '❤';
             btn.style.color = 'red'
@@ -288,6 +296,7 @@ function like_click_handler(event) {
             btn.innerHTML = '♡';
             btn.style.color = 'blue'
         }
+        btn.nextElementSibling.innerHTML = data.likes_num;
     })
 }
 

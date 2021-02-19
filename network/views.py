@@ -160,7 +160,7 @@ def change_status(request):
                 tweet.like.remove(request.user)
             else:
                 tweet.like.add(request.user)
-            return JsonResponse({'success': True})
+            return JsonResponse({'success': True, 'likes_num': len(tweet.like.all())})
 
 
 def edit_tweet(request):
