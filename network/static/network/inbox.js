@@ -152,27 +152,30 @@ function create_tweet_element(tweet) {
 
 
     let timestamp = document.createElement('span');
+    timestamp.className = 'timestamp';
     timestamp.innerHTML = tweet.timestamp;
     from_info.appendChild(timestamp);
 
 
     /* elements in tweet_buttons */
-    // edit button
-    let button = document.createElement('а');
-    button.className = 'edit-button';
-
-    if (tweet.own) {
-        button.innerHTML = 'Edit';
-        button.addEventListener('click', edit_tweet_button_handler);
-    }
-
-    tweet_buttons.appendChild(button);
-
-
     // comments button
     button = document.createElement('a');
-    button.innerHTML = 'comm';
+    button.innerHTML = '💬';
+    button.className = 'comment-btn';
+    button.title = 'comments';
     tweet_buttons.appendChild(button);
+
+    // edit button
+    if (tweet.own) {
+        let button = document.createElement('а');
+        button.className = 'edit-button';
+        button.innerHTML = '✎';
+        button.title = "edit";
+        button.addEventListener('click', edit_tweet_button_handler);
+        tweet_buttons.appendChild(button);
+    }
+
+
 
     // like button
     button = document.createElement('a');
@@ -323,12 +326,15 @@ function create_tweet_edit_field(event) {
     // insert tweet text from tweet-container in textarea
     textarea.value = event.target.parentElement.parentElement.children[1].innerHTML.replace(/<br>/g, '\n');
     textarea.addEventListener('input', auto_grow);
+    textarea.className = 'textarea-edit-tweet';
+    textarea.maxLength = "1000";
+    textarea.required = true;
     form.appendChild(textarea);
 
     let input = document.createElement('input');
     input.className = 'submit-edit-tweet';
     input.setAttribute('type', 'submit');
-    input.setAttribute('value', 'edit');
+    input.setAttribute('value', 'Edit');
     form.appendChild(input);
 
     return tweet_field;

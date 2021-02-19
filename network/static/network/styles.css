@@ -1,9 +1,4 @@
-:active, :hover, :focus {
-    outline: none;
-    outline-offset: 0;
-}
-
-a:hover {
+a:hover, .edit-button {
     text-decoration-line: none;
     cursor: pointer;
 }
@@ -12,17 +7,48 @@ a:hover {
     margin: 10px 20px 10px 20px;
 }
 
+
 textarea {
     overflow: hidden;
     width: 100%;
     min-height: 55px;
+
+    resize: none;
+    border-style: none none solid none;
+    border-width: 1px;
+    border-color: rgba(128, 128, 128, 0.3);
 }
 
-#profile {
-    display: none;
-    border-radius: 20px;
-    background-color: rgb(224, 255, 255);
+textarea:focus {
+    outline: none;
+    border-width: 2px;
+    border-color: rgba(0, 191, 255, 1);
 }
+
+.textarea-edit-tweet {
+    border-style: solid none solid none;
+}
+
+
+.submit-button-textarea, .submit-edit-tweet, .follow_btn {
+    height: 30px;
+    margin: 5px;
+    border: none;
+    border-radius: 15px;
+    color: white;
+    background-color: rgba(0, 191, 255, 0.8);
+}
+
+.submit-button-textarea:focus, .submit-edit-tweet:focus, .follow_btn:focus {
+    outline: none;
+    border: solid rgba(30, 144, 255, 0.8) 1px;
+    box-sizing: border-box;
+}
+
+.submit-button-textarea:hover, .submit-edit-tweet:hover, .follow_btn:hover {
+    background-color: rgba(0, 191, 255, 1);
+}
+
 
 .like-btn {
     font-size: 20px;
@@ -30,10 +56,54 @@ textarea {
 }
 
 
+
 #pagination-container {
-    color: blue;
+    color: rgba(65, 105, 225, 1);
     border: none;
 }
+
+
+#profile {
+    display: none;
+    border-radius: 20px;
+    background-color: rgba(224, 255, 255, 0.5);
+}
+
+.profile-link:not(nothing) {
+    font-weight: bold;
+    color: rgba(0, 0, 0, 0.75);
+}
+
+.profile-link:not(nothing):hover {
+    color: rgba(0, 0, 0, 1);
+    font-weight: bold;
+    text-decoration-line: underline;
+}
+
+
+.timestamp, .edit-mark-container {
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.tweet-buttons a {
+    /*
+    color: rgba(128, 128, 128, 0.5);
+    */
+    color: rgba(65, 105, 225, 0.25);
+}
+
+.edit-button {
+    color: rgba(65, 105, 225, 0.5);
+}
+
+.tweet-buttons a:hover, .edit-button:hover {
+    color: rgba(65, 105, 225, 1);
+}
+
+.edit-mark-container {
+    font-size: 80%;
+}
+
 
 /* Grid */
 .grid-container {
@@ -45,7 +115,7 @@ textarea {
 
 .grid-item {
     overflow: hidden;
-    border: solid grey 1px;
+    border-bottom: solid rgba(128, 128, 128, 0.5) 1px;
     padding: 10px;
 }
 
@@ -85,6 +155,11 @@ textarea {
 #pagination-container {
     justify-content: center;
 }
+
+.submit-edit-tweet {
+    align-self: flex-end;
+}
+
 
 /* Media */
 @media screen and (max-width: 992px) {

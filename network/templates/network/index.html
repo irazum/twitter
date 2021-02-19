@@ -12,8 +12,8 @@
 
         <div id="tweet-field" class="grid-item" {% if user.is_authenticated %} data-is_auth="1" {% endif %}>
             <form class="flex-container" id="tweet-form">
-                <textarea placeholder="Tweet your message :)"></textarea>
-                <input class="submit-button-textarea" type="submit" value="tweet">
+                <textarea placeholder="Tweet your message :)" required maxlength="1000"></textarea>
+                <input class="submit-button-textarea" type="submit" value="Tweet">
             </form>
         </div>
 
