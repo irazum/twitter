@@ -86,17 +86,11 @@ function load_tweets(type, page) {
     .then(response => response.json())
     .then(data => {
         /* drop old tweet grid-items */
-        items = document.querySelector(".grid-container").children;
-        // transform nodeList in Array
-        items = Array.from(items);
-        items = items.slice(2, items.length);
-        items.forEach(item => {
-            item.remove();
-        });
+        remove_children(document.querySelector(".grid-container"), 2)
 
         data.tweets.forEach(tweet => {
             /* create new tweet grid-item */
-            let grid_item = create_tweet_element(tweet);
+            let grid_item = createElement_message(tweet);
             document.querySelector(".grid-container").append(grid_item);
         });
 
@@ -106,40 +100,61 @@ function load_tweets(type, page) {
 }
 
 
-function create_tweet_element(tweet) {
-    // main element
+
+function remove_children(container, start_index=0) {
+    items = container.children;
+    // transform nodeList in Array
+    items = Array.from(items);
+    items = items.slice(start_index, items.length);
+    items.forEach(item => {
+        item.remove();
+    });
+}
+
+
+
+
+
+function createElement_message(tweet) {
+    // create main element
     let grid_item = document.createElement('div');
     grid_item.className = "grid-item tweet-container";
-    grid_item.dataset.id = tweet.id
+    grid_item.dataset.id = tweet.id;
 
-    // elements in grid item
+    grid_item.appendChild(createElement_message_fromInfo(tweet));
+    grid_item.appendChild(createElement_message_text(tweet));
+    if (tweet.edit) {
+        grid_item.appendChild(createElement_message_editMark());
+    }
+    grid_item.appendChild(createElement_message_buttons(tweet));
+
+
+    return grid_item
+}
+
+
+
+
+function createElement_message_fromInfo(tweet) {
+    /* elements in grid item */
     let from_info = document.createElement('div');
     from_info.className = "from-info";
-    grid_item.appendChild(from_info);
 
-    let tweet_text = document.createElement('div');
-    tweet_text.className = 'tweet';
-    // replace \n on <br> in text for correct text display
-    tweet_text.innerHTML = tweet.text.replace(/\n/g, '<br>');
+    prof_link = createElement_profLink(tweet.user_id ,tweet.username);
+    from_info.appendChild(prof_link);
 
-    grid_item.appendChild(tweet_text);
+    from_info.appendChild(createElement_timestamp(tweet.timestamp));
 
-    if (tweet.edit) {
-        edit_mark = document.createElement('div');
-        edit_mark.className = 'edit-mark-container';
-        edit_mark.innerHTML = 'edited';
-        grid_item.appendChild(edit_mark);
-    }
+    return from_info
+}
 
-    let tweet_buttons = document.createElement('div');
-    tweet_buttons.className = 'tweet-buttons';
-    grid_item.appendChild(tweet_buttons);
 
+function createElement_profLink(user_id, username) {
     // elements in from_info
     let prof_link = document.createElement('a');
     prof_link.className = 'profile-link';
-    prof_link.setAttribute('data-id', tweet.user_id);
-    prof_link.innerHTML = tweet.username;
+    prof_link.setAttribute('data-id', user_id);
+    prof_link.innerHTML = username;
 
     prof_link.addEventListener('click', (event) => {
         pr_id = event.target.getAttribute('data-id');
@@ -148,39 +163,83 @@ function create_tweet_element(tweet) {
         window.scroll(0, 0);
     });
 
-    from_info.appendChild(prof_link);
+    return prof_link
+}
+
+function createElement_timestamp(timestamp) {
+    let timestamp_mark = document.createElement('span');
+    timestamp_mark.className = 'timestamp';
+    timestamp_mark.innerHTML = timestamp;
+    return timestamp_mark
+}
 
 
-    let timestamp = document.createElement('span');
-    timestamp.className = 'timestamp';
-    timestamp.innerHTML = tweet.timestamp;
-    from_info.appendChild(timestamp);
+function createElement_message_text(tweet) {
+    let tweet_text = document.createElement('div');
+    tweet_text.className = 'message';
+    // replace \n on <br> in text for correct text display
+    tweet_text.innerHTML = tweet.text.replace(/\n/g, '<br>');
+    return tweet_text
+}
 
 
-    /* elements in tweet_buttons */
+
+function createElement_message_editMark() {
+    edit_mark = document.createElement('div');
+    edit_mark.className = 'edit-mark-container';
+    edit_mark.innerHTML = 'edited';
+    return edit_mark
+}
+
+
+
+function createElement_message_buttons(tweet) {
+    let tweet_buttons = document.createElement('div');
+    tweet_buttons.className = 'tweet-buttons';
+
     // comments button
-    button = document.createElement('a');
+    tweet_buttons.appendChild(createElement_commentButton(tweet));
+    // edit button
+    if (tweet.own) {
+        tweet_buttons.appendChild(createElement_editButton());
+    }
+    // like button
+    tweet_buttons.appendChild(createElement_likeButton(tweet));
+
+    return tweet_buttons
+}
+
+
+function createElement_commentButton(tweet) {
+    let button = document.createElement('a');
     button.innerHTML = '💬';
     button.className = 'comment-btn';
     button.title = 'comments';
-    tweet_buttons.appendChild(button);
+    button.addEventListener('click', comment_btn_click_handler)
+    return button
+}
 
-    // edit button
-    if (tweet.own) {
-        let button = document.createElement('а');
-        button.className = 'edit-button';
-        button.innerHTML = '✎';
-        button.title = "edit";
-        button.addEventListener('click', edit_tweet_button_handler);
-        tweet_buttons.appendChild(button);
-    }
+function createElement_editButton() {
+    let button = document.createElement('а');
+    button.className = 'edit-button';
+    button.innerHTML = '✎';
+    button.title = "edit";
+    button.addEventListener('click', edit_tweet_button_handler);
+    return button
+}
+
+function createElement_likeButton(tweet) {
+    let span = document.createElement('span');
+
+    span.appendChild(createElement_likeHeart(tweet));
+
+    span.appendChild(createElement_likeSign(tweet));
+
+    return span
+}
 
 
-
-    // like button
-    span = document.createElement('span');
-    tweet_buttons.appendChild(span);
-
+function createElement_likeHeart(tweet) {
     button = document.createElement('a');
     button.className = 'like-btn';
     if (tweet.like === '') {
@@ -193,15 +252,36 @@ function create_tweet_element(tweet) {
         else { button.innerHTML = '❤'; button.style.color = 'red';}
         button.addEventListener('click', like_click_handler)
     }
-    span.appendChild(button);
 
+    return button
+}
+
+function createElement_likeSign(tweet) {
     text_span = document.createElement('span');
     text_span.className = 'likes-number';
     text_span.innerHTML = tweet.likes_num;
-    span.appendChild(text_span);
-
-    return grid_item
+    return text_span
 }
+
+
+
+
+
+function fill_message_container(grid_item, message) {
+    /*
+    container --> DOM-element
+    message --> dict with message data
+    --> return null
+    */
+
+}
+
+
+
+
+
+
+
 
 
 
@@ -218,7 +298,7 @@ function submit_tweet_handler(event) {
     .then(response => response.json())
     .then(tweet => {
         // create and insert into html tweet in needed position
-        let grid_item = create_tweet_element(tweet);
+        let grid_item = createElement_message(tweet);
         let container = document.querySelector('.grid-container');
         container.insertBefore(grid_item, container.children[2]);
     })
@@ -436,4 +516,35 @@ function getCookie(name) {
         }
     }
     return cookieValue;
+}
+
+
+
+function comment_btn_click_handler(event) {
+    // hide profile and tweet-field
+    document.querySelector('#profile').style.display = 'none';
+    document.querySelector('#tweet-field').style.display = 'none';
+
+    // replace the tweet-item on third place in grid-container
+    tweet = event.target.parentElement.parentElement;
+    let container = document.querySelector('.grid-container');
+    container.insertBefore(tweet, container.children[2]);
+
+    // remove below elements
+    remove_children(document.querySelector(".grid-container"), 3);
+
+    // send fetch request to spec url /comments/<tweet_id>
+    /*
+    fetch(`/comments/${tweet.dataset.id}`)
+    .then(response => response.json())
+    .then(comments => {
+
+        // create spec grid-item with padding
+        let grid_item
+
+        // create in cycle comment elements from response-data and add these in the grid-item
+
+    })
+
+    */
 }
