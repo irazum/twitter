@@ -114,7 +114,6 @@ function remove_children(container, start_index=0) {
 
 
 
-
 function createElement_message(tweet) {
     // create main element
     let grid_item = document.createElement('div');
@@ -122,7 +121,7 @@ function createElement_message(tweet) {
     grid_item.dataset.id = tweet.id;
 
     grid_item.appendChild(createElement_message_fromInfo(tweet));
-    grid_item.appendChild(createElement_message_text(tweet));
+    grid_item.appendChild(createElement_message_text(tweet.text));
     if (tweet.edit) {
         grid_item.appendChild(createElement_message_editMark());
     }
@@ -174,14 +173,13 @@ function createElement_timestamp(timestamp) {
 }
 
 
-function createElement_message_text(tweet) {
+function createElement_message_text(text) {
     let tweet_text = document.createElement('div');
     tweet_text.className = 'message';
     // replace \n on <br> in text for correct text display
-    tweet_text.innerHTML = tweet.text.replace(/\n/g, '<br>');
+    tweet_text.innerHTML = text.replace(/\n/g, '<br>');
     return tweet_text
 }
-
 
 
 function createElement_message_editMark() {
@@ -198,7 +196,7 @@ function createElement_message_buttons(tweet) {
     tweet_buttons.className = 'tweet-buttons';
 
     // comments button
-    tweet_buttons.appendChild(createElement_commentButton(tweet));
+    tweet_buttons.appendChild(createElement_commentButton());
     // edit button
     if (tweet.own) {
         tweet_buttons.appendChild(createElement_editButton());
@@ -210,7 +208,7 @@ function createElement_message_buttons(tweet) {
 }
 
 
-function createElement_commentButton(tweet) {
+function createElement_commentButton() {
     let button = document.createElement('a');
     button.innerHTML = '💬';
     button.className = 'comment-btn';
@@ -231,24 +229,24 @@ function createElement_editButton() {
 function createElement_likeButton(tweet) {
     let span = document.createElement('span');
 
-    span.appendChild(createElement_likeHeart(tweet));
+    span.appendChild(createElement_likeHeart(tweet.like));
 
-    span.appendChild(createElement_likeSign(tweet));
+    span.appendChild(createElement_likeSign(tweet.likes_num));
 
     return span
 }
 
 
-function createElement_likeHeart(tweet) {
+function createElement_likeHeart(like) {
     button = document.createElement('a');
     button.className = 'like-btn';
-    if (tweet.like === '') {
+    if (like === '') {
         button.setAttribute('href', '/login')
         button.innerHTML = '♡';
         button.style.color = 'blue';
     }
     else {
-        if (tweet.like === 0) { button.innerHTML = '♡'; button.style.color = 'blue'; }
+        if (like === 0) { button.innerHTML = '♡'; button.style.color = 'blue'; }
         else { button.innerHTML = '❤'; button.style.color = 'red';}
         button.addEventListener('click', like_click_handler)
     }
@@ -256,10 +254,10 @@ function createElement_likeHeart(tweet) {
     return button
 }
 
-function createElement_likeSign(tweet) {
+function createElement_likeSign(likes_num) {
     text_span = document.createElement('span');
     text_span.className = 'likes-number';
-    text_span.innerHTML = tweet.likes_num;
+    text_span.innerHTML = likes_num;
     return text_span
 }
 
