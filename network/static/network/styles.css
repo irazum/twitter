@@ -93,7 +93,7 @@ textarea:focus {
     color: rgba(65, 105, 225, 0.6);
 }
 
-.tweet-buttons a:hover, .edit-button:hover {
+.message-buttons a:hover, .edit-button:hover {
     color: rgba(65, 105, 225, 1);
 }
 
@@ -160,7 +160,7 @@ textarea:focus {
     align-self: flex-end;
 }
 
-.tweet-buttons, .from-info, .flex-space-between {
+.message-buttons, .from-info, .flex-space-between {
     display: flex;
     justify-content: space-between;
 }

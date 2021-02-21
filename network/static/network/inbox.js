@@ -6,13 +6,13 @@ window.onpopstate = function(event) {
         nav_buttons_handler(type);
     }
     else if (type === 'profile') {
-        profile_link_handler(event.state.id);
+        profLink_click_handler(event.state.id);
     }
     else if (type === 'pagination') {
         load_tweets(event.state.subtype, event.state.page);
     }
     else if (type === 'comments') {
-        comment_btn_click_handler(event.state.tweet_id);
+        commentButton_click_handler(event.state.tweet_id);
     }
 }
 
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // tweet-form handler
     document.querySelector('#tweet-form > textarea').oninput = auto_grow;
-    document.querySelector('#tweet-form').onsubmit = submit_tweet_handler;
+    document.querySelector('#tweet-form').onsubmit = submit_message_handler;
 
     // load tweets for home page (all twits)
     nav_buttons_handler('all-posts');
@@ -70,7 +70,7 @@ function nav_buttons_handler(btnName) {
     }
 
     else if (btnName === "self") {
-        profile_link_handler('self');
+        profLink_click_handler('self');
     }
 }
 
@@ -112,34 +112,32 @@ function remove_children(container, start_index=0) {
 }
 
 
-function createElement_message(tweet, type=null) {
-    let grid_item = document.createElement('div');
-    grid_item.dataset.id = tweet.id;
+function createElement_message(message, type=null) {
+    let container = document.createElement('div');
+    container.dataset.id = message.id;
 
     if (type === "comment") {
-        grid_item.className = "comment-container";
+        container.className = "comment-container";
     }
-    else {grid_item.className = "grid-item tweet-container";}
+    else {container.className = "grid-item tweet-container";}
 
-
-    grid_item.appendChild(createElement_message_fromInfo(tweet));
-    grid_item.appendChild(createElement_message_text(tweet.text));
-    if (tweet.edit) {
-        grid_item.appendChild(createElement_message_editMark());
+    container.appendChild(createElement_message_fromInfo(message));
+    container.appendChild(createElement_message_text(message.text));
+    if (message.edit) {
+        container.appendChild(createElement_message_editMark());
     }
-    grid_item.appendChild(createElement_message_buttons(tweet, type));
+    container.appendChild(createElement_message_buttons(message, type));
 
-
-    return grid_item;
+    return container;
 }
 
 
-function createElement_message_fromInfo(tweet) {
+function createElement_message_fromInfo(message) {
     let from_info = document.createElement('div');
     from_info.className = "from-info";
 
-    from_info.appendChild(createElement_profLink(tweet.user_id ,tweet.username));
-    from_info.appendChild(createElement_timestamp(tweet.timestamp));
+    from_info.appendChild(createElement_profLink(message.user_id ,message.username));
+    from_info.appendChild(createElement_timestamp(message.timestamp));
 
     return from_info;
 }
@@ -155,7 +153,7 @@ function createElement_profLink(user_id, username) {
     prof_link.addEventListener('click', (event) => {
         pr_id = event.target.getAttribute('data-id');
         history.pushState({type: "profile", id: pr_id, page: 1}, "", `/profile/${pr_id}/page=1`)
-        profile_link_handler(pr_id);
+        profLink_click_handler(pr_id);
         window.scroll(0, 0);
     });
 
@@ -172,11 +170,11 @@ function createElement_timestamp(timestamp) {
 
 
 function createElement_message_text(text) {
-    let tweet_text = document.createElement('div');
-    tweet_text.className = 'message';
+    let message_text = document.createElement('div');
+    message_text.className = 'message';
     // replace \n on <br> in text for correct text display
-    tweet_text.innerHTML = text.replace(/\n/g, '<br>');
-    return tweet_text;
+    message_text.innerHTML = text.replace(/\n/g, '<br>');
+    return message_text;
 }
 
 
@@ -188,22 +186,22 @@ function createElement_message_editMark() {
 }
 
 
-function createElement_message_buttons(tweet, type) {
-    let tweet_buttons = document.createElement('div');
-    tweet_buttons.className = 'tweet-buttons';
+function createElement_message_buttons(message, type) {
+    let message_buttons = document.createElement('div');
+    message_buttons.className = 'message-buttons';
 
     // comments button
     if (!type) {
-        tweet_buttons.appendChild(createElement_commentButton());
+        message_buttons.appendChild(createElement_commentButton());
     }
     // edit button
-    if (tweet.own) {
-        tweet_buttons.appendChild(createElement_editButton(type));
+    if (message.own) {
+        message_buttons.appendChild(createElement_editButton(type));
     }
     // like button
-    tweet_buttons.appendChild(createElement_likeButton(tweet.like, tweet.likes_num, type));
+    message_buttons.appendChild(createElement_likeButton(message.like, message.likes_num, type));
 
-    return tweet_buttons;
+    return message_buttons;
 }
 
 
@@ -215,7 +213,7 @@ function createElement_commentButton() {
     button.addEventListener('click', (event) => {
         id = event.target.parentElement.parentElement.dataset.id;
         history.pushState({type: "comments", tweet_id: id}, '', `posts/${id}/comments/`);
-        comment_btn_click_handler(id);
+        commentButton_click_handler(id);
     });
     return button;
 }
@@ -227,7 +225,7 @@ function createElement_editButton(type) {
     button.innerHTML = '✎';
     button.title = "edit";
     button.addEventListener('click', (event, type_ = type) => {
-        edit_tweet_button_handler(event, type_);
+        editButton_click_handler(event, type_);
     });
     return button;
 }
@@ -273,7 +271,7 @@ function createElement_likeSign(likes_num) {
 
 
 
-function submit_tweet_handler(event, type = null, subtype=null) {
+function submit_message_handler(event, type = null, subtype=null) {
     let textarea = event.target.firstElementChild;
     let url = "/tweets";
 
@@ -294,10 +292,10 @@ function submit_tweet_handler(event, type = null, subtype=null) {
     .then(response => response.json())
     .then(tweet => {
         // create and insert into html tweet in needed position
-        let grid_item = createElement_message(tweet, type);
+        let message_container = createElement_message(tweet, type);
         let container = event.target.parentElement.parentElement;
-        if (subtype === "new_comment") { container.appendChild(grid_item); }
-        else { container.insertBefore(grid_item, container.children[2]); }
+        if (subtype === "new_comment") { container.appendChild(message_container); }
+        else { container.insertBefore(message_container, container.children[2]); }
     })
     textarea.value = '';
 
@@ -307,7 +305,7 @@ function submit_tweet_handler(event, type = null, subtype=null) {
 }
 
 
-function profile_link_handler(id) {
+function profLink_click_handler(id) {
     document.querySelector("#tweet-field").style.display = 'none';
     document.querySelector('#profile').style.display = 'block';
 
@@ -374,36 +372,36 @@ function likeHeart_click_handler(event, type) {
 }
 
 
-function edit_tweet_button_handler(event, type) {
-    let tweet_cur_item = event.target.parentElement.parentElement;
-    // create edit tweet field
-    let tweet_field = create_tweet_edit_field(event, type);
-    tweet_field.dataset.id = tweet_cur_item.dataset.id;
-    // insert edit tweet field into the DOM
-    tweet_cur_item.parentElement.insertBefore(tweet_field, tweet_cur_item);
-    // set initial height for tweet_field
-    textarea = tweet_field.firstChild.firstChild;
+function editButton_click_handler(event, type) {
+    let message_container = event.target.parentElement.parentElement;
+
+    let form_container = createElement_editFormContainer(event, type);
+    form_container.dataset.id = message_container.dataset.id;
+
+    message_container.parentElement.insertBefore(form_container, message_container);
+    // set initial height for form_container
+    textarea = form_container.firstChild.firstChild;
     textarea.style.height = `${textarea.scrollHeight}px`;
     // hide the tweet
-    tweet_cur_item.style.display = 'none';
+    message_container.style.display = 'none';
 
 
 }
 
 
-function create_tweet_edit_field(event, type) {
-    let tweet_field = document.createElement('div');
+function createElement_editFormContainer(event, type) {
+    let form_container = document.createElement('div');
     if (type === 'comment') {
-        tweet_field.className = 'comment-edit-field';
+        form_container.className = 'comment-edit-field';
     }
     else {
-        tweet_field.className = 'grid-item tweet-edit-field';
+        form_container.className = 'grid-item tweet-edit-field';
     }
 
-    tweet_field.appendChild(createElement_simpleForm(event, type));
+    form_container.appendChild(createElement_simpleForm(event, type));
 
 
-    return tweet_field;
+    return form_container;
 }
 
 
@@ -412,10 +410,10 @@ function createElement_simpleForm(event, type=null, subtype=null) {
     form.className = 'flex-container';
     form.onsubmit = (event, subtype_ = subtype) => {
         if (subtype_ === "new_comment") {
-            return submit_tweet_handler(event, 'comment', subtype_);
+            return submit_message_handler(event, 'comment', subtype_);
         }
         else {
-            return edit_form_button_handler(event, type);
+            return submit_simpleForm_edit_handler(event, type);
         }
     };
 
@@ -458,7 +456,7 @@ function createElement_input(subtype) {
 }
 
 
-function edit_form_button_handler(event, type=null) {
+function submit_simpleForm_edit_handler(event, type=null) {
     if (!type) { type = 'tweet' };
 
     edit_item = event.target.parentElement;
@@ -474,13 +472,12 @@ function edit_form_button_handler(event, type=null) {
     })
     .then(response => response.json())
     .then(tweet => {
-        // choose hidden tweet container
-        let tweet_container = edit_item.nextElementSibling;
-        // fill in new tweet text in tweet container
-        tweet_container.children[1].innerHTML = tweet.text.replace(/\n/g, '<br>');
-
-        // show the tweet and remove edit item
-        tweet_container.style.display = 'block';
+        // choose hidden message container
+        let message_container = edit_item.nextElementSibling;
+        // fill in new message text in message container
+        message_container.children[1].innerHTML = tweet.text.replace(/\n/g, '<br>');
+        // show message container and remove edit item
+        message_container.style.display = 'block';
         edit_item.remove();
     })
     return false;
@@ -555,7 +552,7 @@ function getCookie(name) {
 }
 
 
-function comment_btn_click_handler(tweet_id) {
+function commentButton_click_handler(tweet_id) {
     // hide profile and tweet-field
     document.querySelector('#profile').style.display = 'none';
     document.querySelector('#tweet-field').style.display = 'none';
