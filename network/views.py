@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
-from .models import User, Tweet
+from .models import User, Tweet, Comment
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 from django.utils.html import conditional_escape
@@ -67,8 +67,6 @@ def register(request):
         return render(request, "network/register.html")
 
 
-
-
 def tweets(request, num=10):
     # сделать проверку на то, авторизован ли юзер
     if request.method == "POST":
@@ -119,6 +117,29 @@ def tweets(request, num=10):
         })
 
 
+
+def comments(request, tweet_id):
+    try:
+        if request.method == "POST":
+            data = json.loads(request.body)
+            tweet = Tweet.objects.get(id=tweet_id)
+
+            comment = Comment(text=conditional_escape(data['tweetText']), tweet=tweet, user=request.user)
+            comment.save()
+            return JsonResponse(comment.serialize(request.user))
+
+        else:
+            tweet = Tweet.objects.get(id=tweet_id)
+            comments = Comment.objects.filter(tweet=tweet)
+
+            return JsonResponse([comment.serialize(request.user) for comment in comments], safe=False)
+
+    except ValueError as err:
+        print(f"{err.__class__}: ", err)
+        return HttpResponse(status=400)
+
+
+
 def profile(request):
     if request.method == "GET":
 
@@ -155,7 +176,11 @@ def change_status(request):
             return JsonResponse({'success': True})
 
         elif request.GET.get('like'):
-            tweet = Tweet.objects.get(id=int(request.GET.get('id')))
+            if request.GET.get('model') == 'comment':
+                tweet = Comment.objects.get(id=int(request.GET.get('id')))
+            else:
+                tweet = Tweet.objects.get(id=int(request.GET.get('id')))
+
             if request.user in tweet.like.all():
                 tweet.like.remove(request.user)
             else:
@@ -163,10 +188,16 @@ def change_status(request):
             return JsonResponse({'success': True, 'likes_num': len(tweet.like.all())})
 
 
-def edit_tweet(request):
+def edit(request, model):
     if request.method == "POST":
         data = json.loads(request.body)
-        tweet = Tweet.objects.get(id=int(data['id']))
+
+        if model == 'comment':
+            tweet = Comment.objects.get(id=int(data['id']))
+
+        else:
+            tweet = Tweet.objects.get(id=int(data['id']))
+
         if tweet.user == request.user:
             text = conditional_escape(data['text'])
             if tweet.text != text:

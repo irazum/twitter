@@ -114,37 +114,40 @@ function remove_children(container, start_index=0) {
 
 
 
-function createElement_message(tweet) {
-    // create main element
+
+// create message container element
+function createElement_message(tweet, type=null) {
     let grid_item = document.createElement('div');
-    grid_item.className = "grid-item tweet-container";
     grid_item.dataset.id = tweet.id;
+
+    if (type === "comment") {
+        grid_item.className = "comment-container";
+    }
+    else {grid_item.className = "grid-item tweet-container";}
+
 
     grid_item.appendChild(createElement_message_fromInfo(tweet));
     grid_item.appendChild(createElement_message_text(tweet.text));
     if (tweet.edit) {
         grid_item.appendChild(createElement_message_editMark());
     }
-    grid_item.appendChild(createElement_message_buttons(tweet));
+    grid_item.appendChild(createElement_message_buttons(tweet, type));
 
 
-    return grid_item
+    return grid_item;
 }
 
 
 
 
 function createElement_message_fromInfo(tweet) {
-    /* elements in grid item */
     let from_info = document.createElement('div');
     from_info.className = "from-info";
 
-    prof_link = createElement_profLink(tweet.user_id ,tweet.username);
-    from_info.appendChild(prof_link);
-
+    from_info.appendChild(createElement_profLink(tweet.user_id ,tweet.username));
     from_info.appendChild(createElement_timestamp(tweet.timestamp));
 
-    return from_info
+    return from_info;
 }
 
 
@@ -162,14 +165,14 @@ function createElement_profLink(user_id, username) {
         window.scroll(0, 0);
     });
 
-    return prof_link
+    return prof_link;
 }
 
 function createElement_timestamp(timestamp) {
     let timestamp_mark = document.createElement('span');
     timestamp_mark.className = 'timestamp';
     timestamp_mark.innerHTML = timestamp;
-    return timestamp_mark
+    return timestamp_mark;
 }
 
 
@@ -178,7 +181,7 @@ function createElement_message_text(text) {
     tweet_text.className = 'message';
     // replace \n on <br> in text for correct text display
     tweet_text.innerHTML = text.replace(/\n/g, '<br>');
-    return tweet_text
+    return tweet_text;
 }
 
 
@@ -186,25 +189,27 @@ function createElement_message_editMark() {
     edit_mark = document.createElement('div');
     edit_mark.className = 'edit-mark-container';
     edit_mark.innerHTML = 'edited';
-    return edit_mark
+    return edit_mark;
 }
 
 
 
-function createElement_message_buttons(tweet) {
+function createElement_message_buttons(tweet, type) {
     let tweet_buttons = document.createElement('div');
     tweet_buttons.className = 'tweet-buttons';
 
     // comments button
-    tweet_buttons.appendChild(createElement_commentButton());
+    if (!type) {
+        tweet_buttons.appendChild(createElement_commentButton());
+    }
     // edit button
     if (tweet.own) {
-        tweet_buttons.appendChild(createElement_editButton());
+        tweet_buttons.appendChild(createElement_editButton(type));
     }
     // like button
-    tweet_buttons.appendChild(createElement_likeButton(tweet));
+    tweet_buttons.appendChild(createElement_likeButton(tweet.like, tweet.likes_num, type));
 
-    return tweet_buttons
+    return tweet_buttons;
 }
 
 
@@ -213,31 +218,33 @@ function createElement_commentButton() {
     button.innerHTML = '💬';
     button.className = 'comment-btn';
     button.title = 'comments';
-    button.addEventListener('click', comment_btn_click_handler)
-    return button
+    button.addEventListener('click', comment_btn_click_handler);
+    return button;
 }
 
-function createElement_editButton() {
+function createElement_editButton(type) {
     let button = document.createElement('а');
     button.className = 'edit-button';
     button.innerHTML = '✎';
     button.title = "edit";
-    button.addEventListener('click', edit_tweet_button_handler);
-    return button
+    button.addEventListener('click', (event, type_ = type) => {
+        edit_tweet_button_handler(event, type_);
+    });
+    return button;
 }
 
-function createElement_likeButton(tweet) {
+function createElement_likeButton(like, likes_num, type) {
     let span = document.createElement('span');
 
-    span.appendChild(createElement_likeHeart(tweet.like));
+    span.appendChild(createElement_likeHeart(like, type));
 
-    span.appendChild(createElement_likeSign(tweet.likes_num));
+    span.appendChild(createElement_likeSign(likes_num));
 
-    return span
+    return span;
 }
 
 
-function createElement_likeHeart(like) {
+function createElement_likeHeart(like, type) {
     button = document.createElement('a');
     button.className = 'like-btn';
     if (like === '') {
@@ -248,7 +255,9 @@ function createElement_likeHeart(like) {
     else {
         if (like === 0) { button.innerHTML = '♡'; button.style.color = 'blue'; }
         else { button.innerHTML = '❤'; button.style.color = 'red';}
-        button.addEventListener('click', like_click_handler)
+        button.addEventListener('click', (event, type_=type) => {
+            likeHeart_click_handler(event, type_);
+        });
     }
 
     return button
@@ -258,49 +267,38 @@ function createElement_likeSign(likes_num) {
     text_span = document.createElement('span');
     text_span.className = 'likes-number';
     text_span.innerHTML = likes_num;
-    return text_span
+    return text_span;
 }
 
 
 
+function submit_tweet_handler(event, type = null, subtype=null) {
+    let textarea = event.target.firstElementChild;
+    let url = "/tweets";
 
+    if (subtype === "new_comment") {
+        let tweet_id = event.target.parentElement.parentElement.parentElement.children[2].dataset.id;
+        url = `/comments/${tweet_id}`
+     }
 
-function fill_message_container(grid_item, message) {
-    /*
-    container --> DOM-element
-    message --> dict with message data
-    --> return null
-    */
-
-}
-
-
-
-
-
-
-
-
-
-
-function submit_tweet_handler(event) {
-    fetch('/tweets', {
+    fetch(url, {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
         },
         body: JSON.stringify({
-            tweetText: document.querySelector('#tweet-form > textarea').value
+            tweetText: textarea.value
         })
     })
     .then(response => response.json())
     .then(tweet => {
         // create and insert into html tweet in needed position
-        let grid_item = createElement_message(tweet);
-        let container = document.querySelector('.grid-container');
-        container.insertBefore(grid_item, container.children[2]);
+        let grid_item = createElement_message(tweet, type);
+        let container = event.target.parentElement.parentElement;
+        if (subtype === "new_comment") { container.appendChild(grid_item); }
+        else { container.insertBefore(grid_item, container.children[2]); }
     })
-    document.querySelector('#tweet-form > textarea').value = '';
+    textarea.value = '';
 
     // animated
 
@@ -361,9 +359,9 @@ function follow_btn_click_handler(event) {
 }
 
 
-function like_click_handler(event) {
+function likeHeart_click_handler(event, type) {
     let btn = event.target;
-    fetch(`/changestatus?like=1&id=${btn.parentElement.parentElement.parentElement.dataset.id}`)
+    fetch(`/changestatus?like=1&id=${btn.parentElement.parentElement.parentElement.dataset.id}&model=${type}`)
     .then(response => response.json())
     .then(data => {
         if (btn.innerHTML == '♡') {
@@ -380,10 +378,10 @@ function like_click_handler(event) {
 
 
 
-function edit_tweet_button_handler(event) {
+function edit_tweet_button_handler(event, type) {
     let tweet_cur_item = event.target.parentElement.parentElement;
     // create edit tweet field
-    let tweet_field = create_tweet_edit_field(event);
+    let tweet_field = create_tweet_edit_field(event, type);
     tweet_field.dataset.id = tweet_cur_item.dataset.id;
     // insert edit tweet field into the DOM
     tweet_cur_item.parentElement.insertBefore(tweet_field, tweet_cur_item);
@@ -399,38 +397,81 @@ function edit_tweet_button_handler(event) {
 }
 
 
-function create_tweet_edit_field(event) {
+function create_tweet_edit_field(event, type) {
     let tweet_field = document.createElement('div');
-    tweet_field.className = 'grid-item tweet-edit-field';
+    if (type === 'comment') {
+        tweet_field.className = 'comment-edit-field';
+    }
+    else {
+        tweet_field.className = 'grid-item tweet-edit-field';
+    }
 
-    let form = document.createElement('form');
-    form.className = 'flex-container edit-tweet-form';
-    form.onsubmit = edit_form_button_handler;
-    tweet_field.appendChild(form);
+    tweet_field.appendChild(createElement_simpleForm(event, type));
 
-    /* elements in form */
-    textarea = document.createElement('textarea');
-    // insert tweet text from tweet-container in textarea
-    textarea.value = event.target.parentElement.parentElement.children[1].innerHTML.replace(/<br>/g, '\n');
-    textarea.addEventListener('input', auto_grow);
-    textarea.className = 'textarea-edit-tweet';
-    textarea.maxLength = "1000";
-    textarea.required = true;
-    form.appendChild(textarea);
-
-    let input = document.createElement('input');
-    input.className = 'submit-edit-tweet';
-    input.setAttribute('type', 'submit');
-    input.setAttribute('value', 'Edit');
-    form.appendChild(input);
 
     return tweet_field;
 }
 
 
-function edit_form_button_handler(event) {
+
+function createElement_simpleForm(event, type=null, subtype=null) {
+    let form = document.createElement('form');
+    form.className = 'flex-container';
+    form.onsubmit = (event, subtype_ = subtype) => {
+        if (subtype_ === "new_comment") {
+            return submit_tweet_handler(event, 'comment', subtype_);
+        }
+        else {
+            return edit_form_button_handler(event, type);
+        }
+    };
+
+    let textarea = createElement_textarea(event, subtype);
+    form.appendChild(textarea);
+
+    let input = createElement_input(subtype);
+    form.appendChild(input);
+
+    return form
+}
+
+
+function createElement_textarea(event, subtype) {
+    textarea = document.createElement('textarea');
+    textarea.addEventListener('input', auto_grow);
+    textarea.maxLength = "1000";
+    textarea.required = true;
+    if (subtype === "new_comment") {
+        textarea.value = '';
+        textarea.placeholder = 'tweet your comment :^'
+    }
+    else {
+        textarea.value = event.target.parentElement.parentElement.children[1].innerHTML.replace(/<br>/g, '\n');
+        textarea.className = 'textarea-edit-tweet';
+    }
+
+    return textarea
+}
+
+
+function createElement_input(subtype) {
+    let input = document.createElement('input');
+    input.className = 'submit-button-textarea';
+    input.setAttribute('type', 'submit');
+    if (subtype === "new_comment") { input.setAttribute('value', 'Comment'); }
+    else { input.setAttribute('value', 'Edit'); }
+
+    return input
+}
+
+
+
+
+function edit_form_button_handler(event, type=null) {
+    if (!type) { type = 'tweet' };
+
     edit_item = event.target.parentElement;
-    fetch('/edit/tweet', {
+    fetch(`/edit/${type}`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
@@ -517,7 +558,7 @@ function getCookie(name) {
 }
 
 
-
+// вынести отдельно функцию load_comments
 function comment_btn_click_handler(event) {
     // hide profile and tweet-field
     document.querySelector('#profile').style.display = 'none';
@@ -531,18 +572,28 @@ function comment_btn_click_handler(event) {
     // remove below elements
     remove_children(document.querySelector(".grid-container"), 3);
 
-    // send fetch request to spec url /comments/<tweet_id>
-    /*
+
+    // create empty grid-container with padding
+    let comments_container = document.createElement('div');
+    comments_container.className = "comments-container grid-item";
+    document.querySelector(".grid-container").appendChild(comments_container);
+
+
+    // create new-message-container and add in it form for writing new comments
+    let form_container = document.createElement('div');
+    form_container.className = 'new-message-container';
+    form_container.appendChild(createElement_simpleForm(null, null, 'new_comment'));
+    comments_container.appendChild(form_container);
+
+
+    // send fetch request to spec url /comments&id=<tweet_id>
     fetch(`/comments/${tweet.dataset.id}`)
     .then(response => response.json())
     .then(comments => {
 
-        // create spec grid-item with padding
-        let grid_item
-
-        // create in cycle comment elements from response-data and add these in the grid-item
-
+        comments.forEach(comment => {
+            comment_item = createElement_message(comment, type='comment');
+            comments_container.appendChild(comment_item);
+        })
     })
-
-    */
 }

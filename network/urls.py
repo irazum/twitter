@@ -12,6 +12,7 @@ urlpatterns = [
     path("profile", views.profile, name="profile"),
     path("tweets", views.tweets, name="tweets"),
     path("changestatus", views.change_status, name="change_status"),
-    path("edit/tweet", views.edit_tweet, name="edit_tweet"),
+    path("edit/<str:model>", views.edit, name="edit"),
+    path("comments/<int:tweet_id>", views.comments, name="comments"),
     re_path(r"(?P<url>.+)", views.any_url, name="any_url")
 ]
