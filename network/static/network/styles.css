@@ -108,7 +108,7 @@ textarea:focus {
 
 
 .new-message-container {
-    border-style: solid solid none solid;
+    border-style: solid solid solid solid;
     border-width: 1px;
     border-color: rgba(128, 128, 128, 0.5);
 }

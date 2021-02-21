@@ -11,8 +11,10 @@ window.onpopstate = function(event) {
     else if (type === 'pagination') {
         load_tweets(event.state.subtype, event.state.page);
     }
+    else if (type === 'comments') {
+        comment_btn_click_handler(event.state.tweet_id);
+    }
 }
-
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -73,7 +75,6 @@ function nav_buttons_handler(btnName) {
 }
 
 
-
 function auto_grow(event) {
     element = event.target
     element.style.height = "5px";
@@ -100,7 +101,6 @@ function load_tweets(type, page) {
 }
 
 
-
 function remove_children(container, start_index=0) {
     items = container.children;
     // transform nodeList in Array
@@ -112,10 +112,6 @@ function remove_children(container, start_index=0) {
 }
 
 
-
-
-
-// create message container element
 function createElement_message(tweet, type=null) {
     let grid_item = document.createElement('div');
     grid_item.dataset.id = tweet.id;
@@ -136,8 +132,6 @@ function createElement_message(tweet, type=null) {
 
     return grid_item;
 }
-
-
 
 
 function createElement_message_fromInfo(tweet) {
@@ -168,6 +162,7 @@ function createElement_profLink(user_id, username) {
     return prof_link;
 }
 
+
 function createElement_timestamp(timestamp) {
     let timestamp_mark = document.createElement('span');
     timestamp_mark.className = 'timestamp';
@@ -191,7 +186,6 @@ function createElement_message_editMark() {
     edit_mark.innerHTML = 'edited';
     return edit_mark;
 }
-
 
 
 function createElement_message_buttons(tweet, type) {
@@ -218,9 +212,14 @@ function createElement_commentButton() {
     button.innerHTML = '💬';
     button.className = 'comment-btn';
     button.title = 'comments';
-    button.addEventListener('click', comment_btn_click_handler);
+    button.addEventListener('click', (event) => {
+        id = event.target.parentElement.parentElement.dataset.id;
+        history.pushState({type: "comments", tweet_id: id}, '', `posts/${id}/comments/`);
+        comment_btn_click_handler(id);
+    });
     return button;
 }
+
 
 function createElement_editButton(type) {
     let button = document.createElement('а');
@@ -232,6 +231,7 @@ function createElement_editButton(type) {
     });
     return button;
 }
+
 
 function createElement_likeButton(like, likes_num, type) {
     let span = document.createElement('span');
@@ -262,6 +262,7 @@ function createElement_likeHeart(like, type) {
 
     return button
 }
+
 
 function createElement_likeSign(likes_num) {
     text_span = document.createElement('span');
@@ -307,18 +308,15 @@ function submit_tweet_handler(event, type = null, subtype=null) {
 
 
 function profile_link_handler(id) {
-    /* */
     document.querySelector("#tweet-field").style.display = 'none';
     document.querySelector('#profile').style.display = 'block';
 
-    /* fill in profile block */
     fetch(`/profile?id=${id}`)
     .then(response => response.json())
     .then(profile_data => {
         profile_container_filler(profile_data);
     })
 
-    // load tweets
     load_tweets(`user&id=${id}`, 1);
 }
 
@@ -329,6 +327,7 @@ function profile_container_filler(profile_data) {
     document.querySelector('#profile .following_num').innerHTML = `${profile_data.following_num} Following`;
     document.querySelector('#profile .followers_num').innerHTML = `${profile_data.followers_num} Followers`;
     follow_btn = document.querySelector('#profile .follow_btn');
+    // user is auth
     if (follow_btn) {
         // user == profile_user
         if (profile_data.follow_btn == '') {
@@ -337,12 +336,10 @@ function profile_container_filler(profile_data) {
         else {
             follow_btn.style.display = "inline";
             follow_btn.innerHTML = profile_data.follow_btn;
-            // add follow profile button click handler
             follow_btn.addEventListener('click', follow_btn_click_handler);
         }
     }
 }
-
 
 
 function follow_btn_click_handler(event) {
@@ -377,7 +374,6 @@ function likeHeart_click_handler(event, type) {
 }
 
 
-
 function edit_tweet_button_handler(event, type) {
     let tweet_cur_item = event.target.parentElement.parentElement;
     // create edit tweet field
@@ -385,11 +381,9 @@ function edit_tweet_button_handler(event, type) {
     tweet_field.dataset.id = tweet_cur_item.dataset.id;
     // insert edit tweet field into the DOM
     tweet_cur_item.parentElement.insertBefore(tweet_field, tweet_cur_item);
-
     // set initial height for tweet_field
     textarea = tweet_field.firstChild.firstChild;
     textarea.style.height = `${textarea.scrollHeight}px`;
-
     // hide the tweet
     tweet_cur_item.style.display = 'none';
 
@@ -411,7 +405,6 @@ function create_tweet_edit_field(event, type) {
 
     return tweet_field;
 }
-
 
 
 function createElement_simpleForm(event, type=null, subtype=null) {
@@ -465,8 +458,6 @@ function createElement_input(subtype) {
 }
 
 
-
-
 function edit_form_button_handler(event, type=null) {
     if (!type) { type = 'tweet' };
 
@@ -498,11 +489,30 @@ function edit_form_button_handler(event, type=null) {
 
 function create_pagination(service, type, cur_page) {
     // create div-container pagination and 2 <a>: prev and next
-    pag_container = document.createElement('div');
+    let pag_container = document.createElement('div');
     pag_container.className = "grid-item flex-space-between";
     pag_container.id = "pagination-container";
 
+    let prev = createElement_prevButton(type, cur_page);
+    let next = createElement_nextButton(type, cur_page);
 
+    // fill in pagination-container
+    if (service.has_next && service.has_prev) {
+        pag_container.appendChild(prev);
+        pag_container.appendChild(next);
+    }
+    else if (service.has_next) {
+        pag_container.appendChild(next);
+    }
+    else if (service.has_prev) {
+        pag_container.appendChild(prev);
+    }
+
+    return pag_container
+}
+
+
+function createElement_prevButton(type, cur_page) {
     prev = document.createElement('a');
     prev.className = 'previous-link';
     prev.innerHTML = 'Previous';
@@ -511,7 +521,11 @@ function create_pagination(service, type, cur_page) {
         window.scroll(0, 0);
         load_tweets(type_, page);
     });
+    return prev;
+}
 
+
+function createElement_nextButton(type, cur_page) {
     next = document.createElement('a');
     next.className = 'next-link';
     next.innerHTML = 'Next';
@@ -520,24 +534,7 @@ function create_pagination(service, type, cur_page) {
         window.scroll(0, 0);
         load_tweets(type_, page);
     });
-
-    // fill in pagination-container
-    if (service.has_next && service.has_prev) {
-        // add in pagination prev and next
-        pag_container.appendChild(prev);
-        pag_container.appendChild(next);
-    }
-    else if (service.has_next) {
-        // add in pagination next
-        pag_container.appendChild(next);
-    }
-    else if (service.has_prev) {
-        // add in pagination prev
-        pag_container.appendChild(prev);
-    }
-
-    // add pagination-container in the DOM
-    return pag_container
+    return next;
 }
 
 
@@ -558,26 +555,20 @@ function getCookie(name) {
 }
 
 
-// вынести отдельно функцию load_comments
-function comment_btn_click_handler(event) {
+function comment_btn_click_handler(tweet_id) {
     // hide profile and tweet-field
     document.querySelector('#profile').style.display = 'none';
     document.querySelector('#tweet-field').style.display = 'none';
-
     // replace the tweet-item on third place in grid-container
-    tweet = event.target.parentElement.parentElement;
+    tweet = find_tweet_element(tweet_id);
     let container = document.querySelector('.grid-container');
     container.insertBefore(tweet, container.children[2]);
-
     // remove below elements
     remove_children(document.querySelector(".grid-container"), 3);
-
-
     // create empty grid-container with padding
     let comments_container = document.createElement('div');
     comments_container.className = "comments-container grid-item";
     document.querySelector(".grid-container").appendChild(comments_container);
-
 
     // create new-message-container and add in it form for writing new comments
     let form_container = document.createElement('div');
@@ -585,15 +576,28 @@ function comment_btn_click_handler(event) {
     form_container.appendChild(createElement_simpleForm(null, null, 'new_comment'));
     comments_container.appendChild(form_container);
 
-
     // send fetch request to spec url /comments&id=<tweet_id>
-    fetch(`/comments/${tweet.dataset.id}`)
-    .then(response => response.json())
-    .then(comments => {
+    load_comments(comments_container, tweet_id);
+}
 
-        comments.forEach(comment => {
-            comment_item = createElement_message(comment, type='comment');
-            comments_container.appendChild(comment_item);
+
+function load_comments(comments_container, tweet_id) {
+    fetch(`/comments/${tweet_id}`)
+        .then(response => response.json())
+        .then(comments => {
+            comments.forEach(comment => {
+                comment_item = createElement_message(comment, type='comment');
+                comments_container.appendChild(comment_item);
+            })
         })
-    })
+}
+
+
+function find_tweet_element(id) {
+    tweets = Array.from(document.querySelector('.grid-container').children);
+    for (let i = 2; i < tweets.length; i++) {
+        if (tweets[i].dataset.id === id) {
+            return tweets[i];
+        }
+    }
 }
