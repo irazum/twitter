@@ -89,7 +89,7 @@ textarea:focus {
     color: rgba(65, 105, 225, 0.25);
 }
 
-.edit-button, .likes-number {
+.edit-button, .likes-number, .comments-number {
     color: rgba(65, 105, 225, 0.6);
 }
 
@@ -101,16 +101,20 @@ textarea:focus {
     font-size: 80%;
 }
 
-.likes-number {
+.likes-number, .comments-number {
     font-size: 70%;
     margin-left: 7px;
 }
 
 
-.new-message-container {
+.new-message-container, .comment-edit-field {
     border-style: solid solid solid solid;
     border-width: 1px;
     border-color: rgba(128, 128, 128, 0.5);
+}
+
+.comment-edit-field {
+    border-style: none solid solid solid;
 }
 
 
@@ -124,6 +128,7 @@ textarea:focus {
 
 .grid-item, .comment-container {
     overflow: hidden;
+    word-break: break-all;
     border-bottom: solid rgba(128, 128, 128, 0.5) 1px;
     padding: 10px;
 }

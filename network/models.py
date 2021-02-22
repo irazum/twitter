@@ -30,7 +30,8 @@ class Tweet(models.Model):
             'edit': self.edit,
             'like': like,
             'likes_num': len(self.like.all()),
-            'own': own
+            'own': own,
+            'comments_num': len(self.comments.all())
         }
 
     def __str__(self):

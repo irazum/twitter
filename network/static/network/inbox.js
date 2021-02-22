@@ -192,7 +192,7 @@ function createElement_message_buttons(message, type) {
 
     // comments button
     if (!type) {
-        message_buttons.appendChild(createElement_commentButton());
+        message_buttons.appendChild(createElement_commentButton(message.comments_num));
     }
     // edit button
     if (message.own) {
@@ -205,17 +205,35 @@ function createElement_message_buttons(message, type) {
 }
 
 
-function createElement_commentButton() {
+function createElement_commentButton(comments_num) {
+    let span = document.createElement('span');
+
+    span.appendChild(createElement_commentBadge());
+    span.appendChild(createElement_commentSign(comments_num));
+
+    return span
+}
+
+
+function createElement_commentBadge() {
     let button = document.createElement('a');
     button.innerHTML = '💬';
     button.className = 'comment-btn';
     button.title = 'comments';
     button.addEventListener('click', (event) => {
-        id = event.target.parentElement.parentElement.dataset.id;
-        history.pushState({type: "comments", tweet_id: id}, '', `posts/${id}/comments/`);
+        id = event.target.parentElement.parentElement.parentElement.dataset.id;
+        history.pushState({type: "comments", tweet_id: id}, '', `/posts/${id}/comments/`);
         commentButton_click_handler(id);
     });
     return button;
+}
+
+
+function createElement_commentSign(comments_num) {
+    text_span = document.createElement('span');
+    text_span.className = 'comments-number';
+    text_span.innerHTML = comments_num;
+    return text_span;
 }
 
 
@@ -273,7 +291,7 @@ function createElement_likeSign(likes_num) {
 
 function submit_message_handler(event, type = null, subtype=null) {
     let textarea = event.target.firstElementChild;
-    let url = "/tweets";
+    let url = "/tweet";
 
     if (subtype === "new_comment") {
         let tweet_id = event.target.parentElement.parentElement.parentElement.children[2].dataset.id;
@@ -296,8 +314,14 @@ function submit_message_handler(event, type = null, subtype=null) {
         let container = event.target.parentElement.parentElement;
         if (subtype === "new_comment") { container.appendChild(message_container); }
         else { container.insertBefore(message_container, container.children[2]); }
+
+        textarea.value = '';
+        textarea.style.height = '5px';
+        if (subtype === "new_comment") {
+            window.scroll(0, document.body.offsetHeight + window.scrollY);
+        }
     })
-    textarea.value = '';
+
 
     // animated
 
@@ -342,7 +366,8 @@ function profile_container_filler(profile_data) {
 
 function follow_btn_click_handler(event) {
     fetch(`/changestatus?follow=1&id=${document.querySelector('#profile').dataset.id}`)
-    .then(response => {
+    .then(response => response.json())
+    .then(data => {
         let btn = event.target;
         if (btn.innerHTML == 'Follow') {
             btn.innerHTML = 'Unfollow';
@@ -350,6 +375,7 @@ function follow_btn_click_handler(event) {
         else {
             btn.innerHTML = 'Follow';
         }
+        document.querySelector('.followers_num').innerHTML = `${data.followers_num} Followers`;
     })
 }
 
@@ -556,24 +582,23 @@ function commentButton_click_handler(tweet_id) {
     // hide profile and tweet-field
     document.querySelector('#profile').style.display = 'none';
     document.querySelector('#tweet-field').style.display = 'none';
-    // replace the tweet-item on third place in grid-container
-    tweet = find_tweet_element(tweet_id);
-    let container = document.querySelector('.grid-container');
-    container.insertBefore(tweet, container.children[2]);
-    // remove below elements
+
+    // clean grid-container
     remove_children(document.querySelector(".grid-container"), 3);
+    // replace the tweet-item on third place in grid-container
+    load_tweet(tweet_id);
+
     // create empty grid-container with padding
     let comments_container = document.createElement('div');
     comments_container.className = "comments-container grid-item";
-    document.querySelector(".grid-container").appendChild(comments_container);
 
-    // create new-message-container and add in it form for writing new comments
+    // create form for new message and add it in comments-container
     let form_container = document.createElement('div');
     form_container.className = 'new-message-container';
     form_container.appendChild(createElement_simpleForm(null, null, 'new_comment'));
     comments_container.appendChild(form_container);
 
-    // send fetch request to spec url /comments&id=<tweet_id>
+    // load comments in
     load_comments(comments_container, tweet_id);
 }
 
@@ -581,11 +606,17 @@ function commentButton_click_handler(tweet_id) {
 function load_comments(comments_container, tweet_id) {
     fetch(`/comments/${tweet_id}`)
         .then(response => response.json())
-        .then(comments => {
-            comments.forEach(comment => {
+        .then(data => {
+            data.comments.forEach(comment => {
                 comment_item = createElement_message(comment, type='comment');
                 comments_container.appendChild(comment_item);
             })
+            // add comments container in DOM
+            document.querySelector(".grid-container").appendChild(comments_container);
+            // if user is anonymous hide form for create comment
+            if (!data.service.user) {
+                document.querySelector('.new-message-container').style.display = 'none';
+            }
         })
 }
 
@@ -597,4 +628,16 @@ function find_tweet_element(id) {
             return tweets[i];
         }
     }
+}
+
+
+function load_tweet(id) {
+    fetch(`/tweet?id=${id}`)
+    .then(response => response.json())
+    .then(tweet => {
+        let grid_container = document.querySelector(".grid-container");
+        // create tweet item and add it in grid-container
+        let grid_item = createElement_message(tweet);
+        grid_container.replaceChild(grid_item, grid_container.children[2]);
+    })
 }

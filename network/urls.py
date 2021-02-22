@@ -10,6 +10,7 @@ urlpatterns = [
     path("register", views.register, name="register"),
 
     path("profile", views.profile, name="profile"),
+    path("tweet", views.tweet, name="tweet"),
     path("tweets", views.tweets, name="tweets"),
     path("changestatus", views.change_status, name="change_status"),
     path("edit/<str:model>", views.edit, name="edit"),
