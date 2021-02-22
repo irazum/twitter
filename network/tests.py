@@ -11,8 +11,8 @@ class NetworkCaseTest(TestCase):
         Tweet.objects.create(text='tesT', user=self.user)
 
     def test_tweets_url(self):
-        response = self.client.get('/tweets')
-        self.assertEqual(json.loads(response.content)[0]['text'], 'tesT')
+        response = self.client.get('/tweets', {'type': 'allPosts', 'page': 1})
+        self.assertEqual(json.loads(response.content)['tweets'][0]['text'], 'tesT')
 
     def test_tweets_url_login(self):
         log = self.client.login(username='test', password='1234')
@@ -20,7 +20,7 @@ class NetworkCaseTest(TestCase):
 
     def test_tweets_url_2(self):
         self.client.login(username=self.user.username, password='1234')
-        response = self.client.get('/tweets', {'type': 'following'})
+        response = self.client.get('/tweets', {'type': 'following', 'page': 1})
         self.assertEqual(response.status_code, 200)
 
 
